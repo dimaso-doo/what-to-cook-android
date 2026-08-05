@@ -30,3 +30,5 @@ Run the automated tests with:
 ```
 
 The minimum supported version is Android 7.0 (API 24), and the project targets Android 16 (API 36).
+
+Google Play application ID: `com.dimaso.whattocook`.
