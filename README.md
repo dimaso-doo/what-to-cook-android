@@ -2,7 +2,7 @@
 
 A lightweight native Android app that suggests meals based on ingredients the user already has.
 
-The app interface is currently localized in Serbian.
+The app interface and all recipe content are in English.
 
 ## Features
 

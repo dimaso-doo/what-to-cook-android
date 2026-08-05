@@ -52,7 +52,7 @@ public final class RecipeDetailActivity extends Activity {
         scroll.addView(page, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        TextView back = Ui.text(this, "‹  Svi predlozi", 15, Ui.GREEN, true);
+        TextView back = Ui.text(this, "‹  All ideas", 15, Ui.GREEN, true);
         back.setGravity(Gravity.CENTER_VERTICAL);
         back.setMinHeight(Ui.dp(this, 48));
         back.setOnClickListener(v -> finish());
@@ -88,21 +88,21 @@ public final class RecipeDetailActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         metaParams.topMargin = Ui.dp(this, 20);
         page.addView(meta, metaParams);
-        meta.addView(metaCell("⏱", recipe.minutes + " min", "Vreme"));
+        meta.addView(metaCell("⏱", recipe.minutes + " min", "Time"));
         meta.addView(metaDivider());
-        meta.addView(metaCell("●", recipe.difficulty, "Težina"));
+        meta.addView(metaCell("●", recipe.difficulty, "Difficulty"));
         meta.addView(metaDivider());
-        meta.addView(metaCell("♨", recipe.servings + (recipe.servings == 1 ? " porcija" : " porcije"), "Količina"));
+        meta.addView(metaCell("♨", recipe.servings + (recipe.servings == 1 ? " serving" : " servings"), "Yield"));
 
         int missingCount = 0;
         for (String id : recipe.coreIngredientIds) if (!selected.contains(id)) missingCount++;
         TextView availability;
         if (missingCount == 0) {
-            availability = Ui.text(this, "✓  Imaš sve glavne sastojke za ovo jelo", 14, Ui.GREEN, true);
+            availability = Ui.text(this, "✓  You have all the main ingredients", 14, Ui.GREEN, true);
             availability.setBackground(Ui.background(Ui.PALE_GREEN, 13, this));
         } else {
             availability = Ui.text(this,
-                    missingCount == 1 ? "Nedostaje ti 1 glavni sastojak" : "Nedostaju ti " + missingCount + " glavna sastojka",
+                    missingCount == 1 ? "You're missing 1 main ingredient" : "You're missing " + missingCount + " main ingredients",
                     14, Color.rgb(150, 82, 25), true);
             availability.setBackground(Ui.background(Ui.PALE_ORANGE, 13, this));
         }
@@ -112,7 +112,7 @@ public final class RecipeDetailActivity extends Activity {
         availabilityParams.topMargin = Ui.dp(this, 14);
         page.addView(availability, availabilityParams);
 
-        addSectionTitle(page, "Glavni sastojci", "Označeno zeleno već imaš", 29);
+        addSectionTitle(page, "Main ingredients", "Items you already have are marked in green", 29);
         FlowLayout coreFlow = new FlowLayout(this);
         page.addView(coreFlow, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -132,8 +132,8 @@ public final class RecipeDetailActivity extends Activity {
                     ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 40)));
         }
 
-        addSectionTitle(page, "Potrebne količine", "Za " + recipe.servings +
-                (recipe.servings == 1 ? " porciju" : " porcije"), 29);
+        addSectionTitle(page, "Quantities", "For " + recipe.servings +
+                (recipe.servings == 1 ? " serving" : " servings"), 29);
         LinearLayout ingredientCard = sectionCard();
         page.addView(ingredientCard);
         for (int i = 0; i < recipe.ingredientLines.size(); i++) {
@@ -151,7 +151,7 @@ public final class RecipeDetailActivity extends Activity {
             if (i < recipe.ingredientLines.size() - 1) ingredientCard.addView(divider());
         }
 
-        addSectionTitle(page, "Priprema", recipe.steps.size() + " jednostavna koraka", 31);
+        addSectionTitle(page, "Directions", recipe.steps.size() + " simple steps", 31);
         for (int i = 0; i < recipe.steps.size(); i++) {
             LinearLayout step = new LinearLayout(this);
             step.setOrientation(LinearLayout.HORIZONTAL);
@@ -173,7 +173,7 @@ public final class RecipeDetailActivity extends Activity {
             step.addView(instruction, instructionParams);
         }
 
-        TextView enjoy = Ui.text(this, "Prijatno!  🍽", 19, Ui.GREEN, true);
+        TextView enjoy = Ui.text(this, "Enjoy!  🍽", 19, Ui.GREEN, true);
         enjoy.setGravity(Gravity.CENTER);
         enjoy.setPadding(Ui.dp(this, 16), Ui.dp(this, 18), Ui.dp(this, 16), Ui.dp(this, 18));
         enjoy.setBackground(Ui.background(Ui.PALE_GREEN, 16, this));

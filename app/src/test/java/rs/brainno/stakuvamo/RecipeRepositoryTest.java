@@ -37,4 +37,11 @@ public final class RecipeRepositoryTest {
         assertEquals("chicken_risotto", matches.get(0).recipe.id);
         assertEquals(2, matches.get(0).missingIngredientIds.size());
     }
+
+    @Test
+    public void userFacingContentIsEnglish() {
+        assertEquals("Chicken", RecipeRepository.ingredient("chicken").name);
+        assertEquals("Chicken Risotto", RecipeRepository.recipe("chicken_risotto").title);
+        assertEquals("Easy", RecipeRepository.recipe("chicken_risotto").difficulty);
+    }
 }

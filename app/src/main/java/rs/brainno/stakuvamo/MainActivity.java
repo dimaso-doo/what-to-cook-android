@@ -102,7 +102,7 @@ public final class MainActivity extends Activity {
         logo.setGravity(Gravity.CENTER);
         logo.setBackground(Ui.background(Ui.PALE_ORANGE, 14, this));
         brand.addView(logo, new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
-        TextView brandName = Ui.text(this, "ŠTA KUVAMO?", 13, Ui.GREEN, true);
+        TextView brandName = Ui.text(this, "WHAT TO COOK?", 13, Ui.GREEN, true);
         brandName.setLetterSpacing(0.12f);
         LinearLayout.LayoutParams brandNameParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -110,14 +110,14 @@ public final class MainActivity extends Activity {
         brand.addView(brandName, brandNameParams);
         page.addView(brand);
 
-        TextView title = Ui.text(this, "Šta imaš\nu kuhinji?", 35, Ui.INK, true);
+        TextView title = Ui.text(this, "What's in your\nkitchen?", 35, Ui.INK, true);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         titleParams.topMargin = Ui.dp(this, 26);
         page.addView(title, titleParams);
 
         TextView subtitle = Ui.text(this,
-                "Izaberi sastojke koje imaš, a mi ćemo pronaći jela koja su ti najbliža.",
+                "Choose the ingredients you have and we'll find the best matching meals.",
                 16, Ui.MUTED, false);
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -126,7 +126,7 @@ public final class MainActivity extends Activity {
         page.addView(subtitle, subtitleParams);
 
         EditText search = new EditText(this);
-        search.setHint("Pretraži sastojke...");
+        search.setHint("Search ingredients...");
         search.setHintTextColor(Color.rgb(132, 139, 130));
         search.setTextColor(Ui.INK);
         search.setTextSize(16);
@@ -148,7 +148,7 @@ public final class MainActivity extends Activity {
         selectionRowParams.bottomMargin = Ui.dp(this, 13);
         page.addView(selectionRow, selectionRowParams);
 
-        TextView sectionTitle = Ui.text(this, "Sastojci", 20, Ui.INK, true);
+        TextView sectionTitle = Ui.text(this, "Ingredients", 20, Ui.INK, true);
         selectionRow.addView(sectionTitle, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         selectedStatus = Ui.text(this, "", 13, Ui.GREEN, true);
@@ -163,7 +163,7 @@ public final class MainActivity extends Activity {
         renderIngredientChips(searchQuery);
 
         TextView note = Ui.text(this,
-                "Ne moraš da unosiš količine — njih ćeš videti kada otvoriš recept.",
+                "No need to enter quantities — you'll see them when you open a recipe.",
                 13, Ui.MUTED, false);
         note.setPadding(Ui.dp(this, 14), Ui.dp(this, 13), Ui.dp(this, 14), Ui.dp(this, 13));
         note.setBackground(Ui.background(Color.rgb(247, 241, 231), 12, this));
@@ -214,7 +214,7 @@ public final class MainActivity extends Activity {
                     ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 46)));
         }
         if (ingredientFlow.getChildCount() == 0) {
-            TextView empty = Ui.text(this, "Nema sastojka sa tim nazivom.", 14, Ui.MUTED, false);
+            TextView empty = Ui.text(this, "No ingredients match your search.", 14, Ui.MUTED, false);
             empty.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 12));
             ingredientFlow.addView(empty);
         }
@@ -248,11 +248,11 @@ public final class MainActivity extends Activity {
 
     private void updateSelectionUi() {
         int count = selectedIngredients.size();
-        if (selectedStatus != null) selectedStatus.setText(count == 0 ? "Ništa izabrano" : count + " izabrano");
+        if (selectedStatus != null) selectedStatus.setText(count == 0 ? "None selected" : count + " selected");
         if (findButton != null) {
             findButton.setEnabled(count > 0);
             findButton.setAlpha(count > 0 ? 1f : 0.5f);
-            findButton.setText(count > 0 ? "Pronađi jela  →" : "Izaberi bar jedan sastojak");
+            findButton.setText(count > 0 ? "Find meals  →" : "Choose at least one ingredient");
             findButton.setBackground(Ui.background(count > 0 ? Ui.GREEN : Color.rgb(128, 145, 134), 17, this));
         }
     }
@@ -271,7 +271,7 @@ public final class MainActivity extends Activity {
         scroll.addView(page, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        TextView back = Ui.text(this, "‹  Promeni sastojke", 15, Ui.GREEN, true);
+        TextView back = Ui.text(this, "‹  Change ingredients", 15, Ui.GREEN, true);
         back.setGravity(Gravity.CENTER_VERTICAL);
         back.setMinHeight(Ui.dp(this, 48));
         back.setOnClickListener(v -> {
@@ -281,7 +281,7 @@ public final class MainActivity extends Activity {
         page.addView(back, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 48)));
 
-        TextView title = Ui.text(this, "Predlozi za tebe", 32, Ui.INK, true);
+        TextView title = Ui.text(this, "Ideas for you", 32, Ui.INK, true);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         titleParams.topMargin = Ui.dp(this, 10);
@@ -290,8 +290,8 @@ public final class MainActivity extends Activity {
         int readyCount = 0;
         for (RecipeMatch match : matches) if (match.isReady()) readyCount++;
         String summary = matches.isEmpty()
-                ? "Nismo pronašli dovoljno blizak recept. Probaj da dodaš još neki sastojak."
-                : "Pronašli smo " + matches.size() + " jela, poređanih od najboljeg poklapanja.";
+                ? "We couldn't find a close match. Try adding another ingredient."
+                : "We found " + matches.size() + " meals, ranked by best match.";
         TextView subtitle = Ui.text(this, summary, 15, Ui.MUTED, false);
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -317,7 +317,7 @@ public final class MainActivity extends Activity {
 
         if (readyCount > 0) {
             TextView ready = Ui.text(this,
-                    readyCount == 1 ? "1 jelo možeš odmah da spremiš" : readyCount + " jela možeš odmah da spremiš",
+                    readyCount == 1 ? "You can make 1 meal right now" : "You can make " + readyCount + " meals right now",
                     14, Ui.GREEN, true);
             ready.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
             ready.setBackground(Ui.background(Ui.PALE_GREEN, 12, this));
@@ -393,13 +393,12 @@ public final class MainActivity extends Activity {
         int statusColor;
         int statusBackground;
         if (match.isReady()) {
-            status = "✓  Imaš sve glavne sastojke";
+            status = "✓  You have all the main ingredients";
             statusColor = Ui.GREEN;
             statusBackground = Ui.PALE_GREEN;
         } else {
             int missing = match.missingIngredientIds.size();
-            status = missing == 1 ? "Nedostaje: " + missingNames(match.missingIngredientIds)
-                    : "Nedostaju: " + missingNames(match.missingIngredientIds);
+            status = "Missing: " + missingNames(match.missingIngredientIds);
             statusColor = Color.rgb(150, 82, 25);
             statusBackground = Ui.PALE_ORANGE;
         }
@@ -421,7 +420,7 @@ public final class MainActivity extends Activity {
             if (i > 0) builder.append(", ");
             builder.append(ingredient == null ? ids.get(i) : ingredient.name.toLowerCase(Locale.ROOT));
         }
-        if (ids.size() > visibleCount) builder.append(" i još ").append(ids.size() - visibleCount);
+        if (ids.size() > visibleCount) builder.append(" and ").append(ids.size() - visibleCount).append(" more");
         return builder.toString();
     }
 
