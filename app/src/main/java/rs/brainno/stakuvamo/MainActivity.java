@@ -47,8 +47,13 @@ public final class MainActivity extends Activity {
             showingResults = savedInstanceState.getBoolean(STATE_RESULTS, false);
             searchQuery = savedInstanceState.getString(STATE_QUERY, "");
         }
-        if (showingResults) renderResults();
+        if (showingResults) loadResults();
         else renderIngredientPicker();
+        RecipeRepository.refreshIngredients(loaded -> runOnUiThread(() -> {
+            if (loaded && !showingResults && ingredientFlow != null) {
+                renderIngredientChips(searchQuery);
+            }
+        }));
     }
 
     private void configureWindow() {
@@ -190,8 +195,7 @@ public final class MainActivity extends Activity {
         findButton.setStateListAnimator(null);
         findButton.setOnClickListener(v -> {
             if (!selectedIngredients.isEmpty()) {
-                showingResults = true;
-                renderResults();
+                loadResults();
             }
         });
         FrameLayout.LayoutParams buttonParams = new FrameLayout.LayoutParams(
@@ -207,11 +211,16 @@ public final class MainActivity extends Activity {
         if (ingredientFlow == null) return;
         ingredientFlow.removeAllViews();
         String normalizedQuery = normalize(query);
+        int popularCount = 0;
         for (Ingredient ingredient : RecipeRepository.ingredients()) {
             if (!normalizedQuery.isEmpty() && !normalize(ingredient.name).contains(normalizedQuery)) continue;
+            if (normalizedQuery.isEmpty()
+                    && popularCount >= 10
+                    && !selectedIngredients.contains(ingredient.id)) continue;
             TextView chip = ingredientChip(ingredient);
             ingredientFlow.addView(chip, new FlowLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 46)));
+            if (normalizedQuery.isEmpty()) popularCount++;
         }
         if (ingredientFlow.getChildCount() == 0) {
             TextView empty = Ui.text(this, "No ingredients match your search.", 14, Ui.MUTED, false);
@@ -257,9 +266,17 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private void renderResults() {
+    private void loadResults() {
         showingResults = true;
-        List<RecipeMatch> matches = RecipeRepository.findMatches(selectedIngredients);
+        renderResults(RecipeRepository.findMatches(selectedIngredients));
+        RecipeRepository.findMatchesAsync(selectedIngredients, (matches, loadedFromSupabase) ->
+                runOnUiThread(() -> {
+                    if (showingResults && !isFinishing()) renderResults(matches);
+                }));
+    }
+
+    private void renderResults(List<RecipeMatch> matches) {
+        showingResults = true;
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
@@ -287,11 +304,11 @@ public final class MainActivity extends Activity {
         titleParams.topMargin = Ui.dp(this, 10);
         page.addView(title, titleParams);
 
-        int readyCount = 0;
-        for (RecipeMatch match : matches) if (match.isReady()) readyCount++;
         String summary = matches.isEmpty()
-                ? "We couldn't find a close match. Try adding another ingredient."
-                : "We found " + matches.size() + " meals, ranked by best match.";
+                ? "No meals can be made with only these ingredients. Add more ingredients and try again."
+                : matches.size() == 1
+                        ? "We found 1 meal you can make with the ingredients you have."
+                        : "We found " + matches.size() + " meals you can make with the ingredients you have.";
         TextView subtitle = Ui.text(this, summary, 15, Ui.MUTED, false);
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -313,18 +330,6 @@ public final class MainActivity extends Activity {
             chip.setBackground(Ui.background(Ui.PALE_GREEN, 19, this));
             selectedFlow.addView(chip, new FlowLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 38)));
-        }
-
-        if (readyCount > 0) {
-            TextView ready = Ui.text(this,
-                    readyCount == 1 ? "You can make 1 meal right now" : "You can make " + readyCount + " meals right now",
-                    14, Ui.GREEN, true);
-            ready.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
-            ready.setBackground(Ui.background(Ui.PALE_GREEN, 12, this));
-            LinearLayout.LayoutParams readyParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            readyParams.bottomMargin = Ui.dp(this, 16);
-            page.addView(ready, readyParams);
         }
 
         for (RecipeMatch match : matches) page.addView(recipeCard(match));
@@ -389,39 +394,17 @@ public final class MainActivity extends Activity {
         descriptionParams.topMargin = Ui.dp(this, 13);
         card.addView(description, descriptionParams);
 
-        String status;
-        int statusColor;
-        int statusBackground;
         if (match.isReady()) {
-            status = "✓  You have all the main ingredients";
-            statusColor = Ui.GREEN;
-            statusBackground = Ui.PALE_GREEN;
-        } else {
-            int missing = match.missingIngredientIds.size();
-            status = "Missing: " + missingNames(match.missingIngredientIds);
-            statusColor = Color.rgb(150, 82, 25);
-            statusBackground = Ui.PALE_ORANGE;
+            TextView matchStatus = Ui.text(this,
+                    "✓  You have all the main ingredients", 13, Ui.GREEN, true);
+            matchStatus.setPadding(Ui.dp(this, 11), Ui.dp(this, 8), Ui.dp(this, 11), Ui.dp(this, 8));
+            matchStatus.setBackground(Ui.background(Ui.PALE_GREEN, 10, this));
+            LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            statusParams.topMargin = Ui.dp(this, 13);
+            card.addView(matchStatus, statusParams);
         }
-        TextView matchStatus = Ui.text(this, status, 13, statusColor, true);
-        matchStatus.setPadding(Ui.dp(this, 11), Ui.dp(this, 8), Ui.dp(this, 11), Ui.dp(this, 8));
-        matchStatus.setBackground(Ui.background(statusBackground, 10, this));
-        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        statusParams.topMargin = Ui.dp(this, 13);
-        card.addView(matchStatus, statusParams);
         return card;
-    }
-
-    private String missingNames(List<String> ids) {
-        StringBuilder builder = new StringBuilder();
-        int visibleCount = Math.min(ids.size(), 3);
-        for (int i = 0; i < visibleCount; i++) {
-            Ingredient ingredient = RecipeRepository.ingredient(ids.get(i));
-            if (i > 0) builder.append(", ");
-            builder.append(ingredient == null ? ids.get(i) : ingredient.name.toLowerCase(Locale.ROOT));
-        }
-        if (ids.size() > visibleCount) builder.append(" and ").append(ids.size() - visibleCount).append(" more");
-        return builder.toString();
     }
 
     private void openRecipe(String recipeId) {

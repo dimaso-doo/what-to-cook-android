@@ -28,14 +28,25 @@ public final class RecipeRepositoryTest {
     }
 
     @Test
-    public void closestPartialRecipeIsRankedFirst() {
+    public void partialRecipesAreExcluded() {
         HashSet<String> selected = new HashSet<>(Arrays.asList(
                 "chicken", "rice", "onion"));
 
         List<RecipeMatch> matches = RecipeRepository.findMatches(selected);
 
-        assertEquals("chicken_risotto", matches.get(0).recipe.id);
-        assertEquals(2, matches.get(0).missingIngredientIds.size());
+        assertTrue(matches.isEmpty());
+    }
+
+    @Test
+    public void recipesRequiringEggsAreExcludedWithoutEggs() {
+        HashSet<String> selected = new HashSet<>(Arrays.asList(
+                "rice", "carrot", "peas", "onion", "tomato", "pepper", "garlic"));
+
+        List<RecipeMatch> matches = RecipeRepository.findMatches(selected);
+
+        for (RecipeMatch match : matches) {
+            assertTrue(!match.recipe.coreIngredientIds.contains("eggs"));
+        }
     }
 
     @Test

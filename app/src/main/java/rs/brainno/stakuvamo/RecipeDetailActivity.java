@@ -1,7 +1,6 @@
 package rs.brainno.stakuvamo;
 
 import android.app.Activity;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -94,23 +93,16 @@ public final class RecipeDetailActivity extends Activity {
         meta.addView(metaDivider());
         meta.addView(metaCell("♨", recipe.servings + (recipe.servings == 1 ? " serving" : " servings"), "Yield"));
 
-        int missingCount = 0;
-        for (String id : recipe.coreIngredientIds) if (!selected.contains(id)) missingCount++;
-        TextView availability;
-        if (missingCount == 0) {
-            availability = Ui.text(this, "✓  You have all the main ingredients", 14, Ui.GREEN, true);
+        if (selected.containsAll(recipe.coreIngredientIds)) {
+            TextView availability = Ui.text(this,
+                    "✓  You have all the main ingredients", 14, Ui.GREEN, true);
             availability.setBackground(Ui.background(Ui.PALE_GREEN, 13, this));
-        } else {
-            availability = Ui.text(this,
-                    missingCount == 1 ? "You're missing 1 main ingredient" : "You're missing " + missingCount + " main ingredients",
-                    14, Color.rgb(150, 82, 25), true);
-            availability.setBackground(Ui.background(Ui.PALE_ORANGE, 13, this));
+            availability.setPadding(Ui.dp(this, 15), Ui.dp(this, 13), Ui.dp(this, 15), Ui.dp(this, 13));
+            LinearLayout.LayoutParams availabilityParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            availabilityParams.topMargin = Ui.dp(this, 14);
+            page.addView(availability, availabilityParams);
         }
-        availability.setPadding(Ui.dp(this, 15), Ui.dp(this, 13), Ui.dp(this, 15), Ui.dp(this, 13));
-        LinearLayout.LayoutParams availabilityParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        availabilityParams.topMargin = Ui.dp(this, 14);
-        page.addView(availability, availabilityParams);
 
         addSectionTitle(page, "Main ingredients", "Items you already have are marked in green", 29);
         FlowLayout coreFlow = new FlowLayout(this);
