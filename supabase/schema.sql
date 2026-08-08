@@ -32,6 +32,11 @@ create table if not exists public.recipes (
     difficulty text not null,
     servings smallint not null,
     published boolean not null default false,
+    source_name text,
+    source_url text,
+    license_name text,
+    attribution text,
+    modified_from_source boolean not null default false,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     constraint recipes_slug_format check (slug ~ '^[a-z0-9]+(?:_[a-z0-9]+)*$'),
@@ -43,17 +48,23 @@ create table if not exists public.recipes (
 );
 
 create table if not exists public.recipe_ingredients (
+    id bigint generated always as identity primary key,
     recipe_id bigint not null references public.recipes(id) on delete cascade,
     ingredient_id bigint not null references public.ingredients(id) on delete restrict,
     position smallint not null,
     display_text text not null,
     required_for_match boolean not null default true,
     optional boolean not null default false,
-    primary key (recipe_id, ingredient_id),
     unique (recipe_id, position),
     constraint recipe_ingredients_position_positive check (position > 0),
     constraint recipe_ingredients_display_not_blank check (btrim(display_text) <> ''),
     constraint recipe_ingredients_optional_not_required check (not (optional and required_for_match))
+);
+
+create table if not exists public.recipe_requirements (
+    recipe_id bigint not null references public.recipes(id) on delete cascade,
+    ingredient_id bigint not null references public.ingredients(id) on delete restrict,
+    primary key (recipe_id, ingredient_id)
 );
 
 create table if not exists public.recipe_steps (
@@ -83,9 +94,8 @@ create table if not exists private.recipe_sources (
 
 create index if not exists recipe_ingredients_ingredient_id_idx
     on public.recipe_ingredients (ingredient_id, recipe_id);
-create index if not exists recipe_ingredients_required_idx
-    on public.recipe_ingredients (recipe_id, ingredient_id)
-    where required_for_match;
+create index if not exists recipe_requirements_ingredient_id_idx
+    on public.recipe_requirements (ingredient_id, recipe_id);
 create index if not exists recipes_published_sort_idx
     on public.recipes (total_minutes, title)
     where published;
@@ -98,6 +108,7 @@ create index if not exists recipe_sources_recipe_id_idx
 alter table public.ingredients enable row level security;
 alter table public.recipes enable row level security;
 alter table public.recipe_ingredients enable row level security;
+alter table public.recipe_requirements enable row level security;
 alter table public.recipe_steps enable row level security;
 alter table private.recipe_sources enable row level security;
 
@@ -139,14 +150,29 @@ create policy recipe_steps_public_read
         )
     );
 
+drop policy if exists recipe_requirements_public_read on public.recipe_requirements;
+create policy recipe_requirements_public_read
+    on public.recipe_requirements for select
+    to anon, authenticated
+    using (
+        exists (
+            select 1
+            from public.recipes
+            where recipes.id = recipe_requirements.recipe_id
+              and recipes.published
+        )
+    );
+
 revoke all on table public.ingredients from anon, authenticated;
 revoke all on table public.recipes from anon, authenticated;
 revoke all on table public.recipe_ingredients from anon, authenticated;
 revoke all on table public.recipe_steps from anon, authenticated;
+revoke all on table public.recipe_requirements from anon, authenticated;
 grant select on table public.ingredients to anon, authenticated;
 grant select on table public.recipes to anon, authenticated;
 grant select on table public.recipe_ingredients to anon, authenticated;
 grant select on table public.recipe_steps to anon, authenticated;
+grant select on table public.recipe_requirements to anon, authenticated;
 
 revoke all on schema private from public, anon, authenticated;
 grant usage on schema private to service_role;
@@ -161,6 +187,11 @@ returns table (
     total_minutes smallint,
     difficulty text,
     servings smallint,
+    source_name text,
+    source_url text,
+    license_name text,
+    attribution text,
+    modified_from_source boolean,
     required_ingredient_slugs text[],
     ingredient_lines text[],
     steps text[]
@@ -178,13 +209,17 @@ as $$
         r.total_minutes,
         r.difficulty,
         r.servings,
+        r.source_name,
+        r.source_url,
+        r.license_name,
+        r.attribution,
+        r.modified_from_source,
         array(
             select i.slug
-            from public.recipe_ingredients ri
-            join public.ingredients i on i.id = ri.ingredient_id
-            where ri.recipe_id = r.id
-              and ri.required_for_match
-            order by ri.position
+            from public.recipe_requirements rr
+            join public.ingredients i on i.id = rr.ingredient_id
+            where rr.recipe_id = r.id
+            order by i.name
         ),
         array(
             select ri.display_text
@@ -203,23 +238,20 @@ as $$
       and coalesce(cardinality(available_ingredient_slugs), 0) > 0
       and exists (
           select 1
-          from public.recipe_ingredients ri
-          where ri.recipe_id = r.id
-            and ri.required_for_match
+          from public.recipe_requirements rr
+          where rr.recipe_id = r.id
       )
       and not exists (
           select 1
-          from public.recipe_ingredients ri
-          join public.ingredients i on i.id = ri.ingredient_id
-          where ri.recipe_id = r.id
-            and ri.required_for_match
+          from public.recipe_requirements rr
+          join public.ingredients i on i.id = rr.ingredient_id
+          where rr.recipe_id = r.id
             and not (i.slug = any(available_ingredient_slugs))
       )
     order by (
         select count(*)
-        from public.recipe_ingredients ri
-        where ri.recipe_id = r.id
-          and ri.required_for_match
+        from public.recipe_requirements rr
+        where rr.recipe_id = r.id
     ) desc,
     r.total_minutes,
     r.title;

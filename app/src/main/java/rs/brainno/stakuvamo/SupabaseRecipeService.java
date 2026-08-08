@@ -73,6 +73,11 @@ final class SupabaseRecipeService {
                             row.getInt("total_minutes"),
                             row.getString("difficulty"),
                             row.getInt("servings"),
+                            nullable(row, "source_name"),
+                            nullable(row, "source_url"),
+                            nullable(row, "license_name"),
+                            nullable(row, "attribution"),
+                            row.optBoolean("modified_from_source", false),
                             strings(row.getJSONArray("required_ingredient_slugs")),
                             strings(row.getJSONArray("ingredient_lines")),
                             strings(row.getJSONArray("steps"))));
@@ -88,6 +93,10 @@ final class SupabaseRecipeService {
         List<String> result = new ArrayList<>();
         for (int index = 0; index < values.length(); index++) result.add(values.getString(index));
         return result;
+    }
+
+    private static String nullable(JSONObject row, String key) {
+        return row.isNull(key) ? null : row.optString(key, null);
     }
 
     private static String request(String method, String path, String body) throws Exception {

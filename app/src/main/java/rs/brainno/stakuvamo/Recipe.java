@@ -10,6 +10,11 @@ public final class Recipe {
     public final int minutes;
     public final String difficulty;
     public final int servings;
+    public final String sourceName;
+    public final String sourceUrl;
+    public final String licenseName;
+    public final String attribution;
+    public final boolean modifiedFromSource;
     public final List<String> coreIngredientIds;
     public final List<String> ingredientLines;
     public final List<String> steps;
@@ -17,6 +22,15 @@ public final class Recipe {
     public Recipe(String id, String title, String emoji, String description, int minutes,
                   String difficulty, int servings, List<String> coreIngredientIds,
                   List<String> ingredientLines, List<String> steps) {
+        this(id, title, emoji, description, minutes, difficulty, servings,
+                null, null, null, null, false, coreIngredientIds, ingredientLines, steps);
+    }
+
+    public Recipe(String id, String title, String emoji, String description, int minutes,
+                  String difficulty, int servings, String sourceName, String sourceUrl,
+                  String licenseName, String attribution, boolean modifiedFromSource,
+                  List<String> coreIngredientIds, List<String> ingredientLines,
+                  List<String> steps) {
         this.id = id;
         this.title = title;
         this.emoji = emoji;
@@ -24,6 +38,11 @@ public final class Recipe {
         this.minutes = minutes;
         this.difficulty = difficulty;
         this.servings = servings;
+        this.sourceName = sourceName;
+        this.sourceUrl = sourceUrl;
+        this.licenseName = licenseName;
+        this.attribution = attribution;
+        this.modifiedFromSource = modifiedFromSource;
         this.coreIngredientIds = coreIngredientIds;
         this.ingredientLines = ingredientLines;
         this.steps = steps;

@@ -1,6 +1,8 @@
 package rs.brainno.stakuvamo;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -163,6 +165,33 @@ public final class RecipeDetailActivity extends Activity {
             instructionParams.leftMargin = Ui.dp(this, 13);
             instructionParams.topMargin = Ui.dp(this, 5);
             step.addView(instruction, instructionParams);
+        }
+
+        if (recipe.sourceName != null && !recipe.sourceName.isEmpty()) {
+            addSectionTitle(page, "Source and license", "Recipe provenance", 20);
+            LinearLayout sourceCard = sectionCard();
+            sourceCard.setPadding(Ui.dp(this, 16), Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 14));
+            TextView source = Ui.text(this, recipe.sourceName, 15, Ui.GREEN, true);
+            sourceCard.addView(source);
+            if (recipe.attribution != null && !recipe.attribution.isEmpty()) {
+                TextView attribution = Ui.text(this, "Attribution: " + recipe.attribution,
+                        13, Ui.MUTED, false);
+                attribution.setPadding(0, Ui.dp(this, 7), 0, 0);
+                sourceCard.addView(attribution);
+            }
+            if (recipe.licenseName != null && !recipe.licenseName.isEmpty()) {
+                String licenseText = recipe.licenseName
+                        + (recipe.modifiedFromSource ? " · Adapted for What to Cook" : "");
+                TextView license = Ui.text(this, licenseText, 13, Ui.MUTED, false);
+                license.setPadding(0, Ui.dp(this, 5), 0, 0);
+                sourceCard.addView(license);
+            }
+            if (recipe.sourceUrl != null && !recipe.sourceUrl.isEmpty()) {
+                source.setText(recipe.sourceName + "  ↗");
+                source.setOnClickListener(v -> startActivity(
+                        new Intent(Intent.ACTION_VIEW, Uri.parse(recipe.sourceUrl))));
+            }
+            page.addView(sourceCard);
         }
 
         TextView enjoy = Ui.text(this, "Enjoy!  🍽", 19, Ui.GREEN, true);

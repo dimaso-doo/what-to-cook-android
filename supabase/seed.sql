@@ -40,22 +40,23 @@ on conflict (slug) do update set
     updated_at = now();
 
 insert into public.recipes
-    (slug, title, emoji, description, total_minutes, difficulty, servings, published)
+    (slug, title, emoji, description, total_minutes, difficulty, servings, published,
+     source_name, source_url, license_name, attribution, modified_from_source)
 values
-    ('chicken_risotto', 'Chicken Risotto', '🍲', 'A creamy one-pan meal that is perfect for a busy weeknight.', 35, 'Easy', 2, true),
-    ('veggie_omelette', 'Vegetable Omelet', '🍳', 'A quick, fluffy omelet for breakfast or a light dinner.', 15, 'Very easy', 1, true),
-    ('tomato_pasta', 'Pasta with Tomato Sauce', '🍝', 'A simple classic with plenty of garlic flavor.', 25, 'Easy', 2, true),
-    ('fried_rice', 'Egg Fried Rice', '🥘', 'A delicious way to use up yesterday''s cooked rice.', 20, 'Easy', 2, true),
-    ('potato_frittata', 'Potato Frittata', '🥔', 'A satisfying meal made with a few everyday ingredients.', 35, 'Easy', 2, true),
-    ('chicken_pasta', 'Creamy Chicken Pasta', '🍗', 'Tender chicken and pasta in a light yogurt sauce.', 30, 'Easy', 2, true),
-    ('stuffed_zucchini', 'Stuffed Zucchini', '🥒', 'Tender zucchini filled with ground beef and rice.', 55, 'Medium', 3, true),
-    ('tuna_salad', 'Tuna Salad', '🥗', 'A fresh, protein-packed salad ready in ten minutes.', 10, 'Very easy', 2, true),
-    ('shakshuka', 'Shakshuka', '🍅', 'Eggs gently cooked in a rich tomato and bell pepper sauce.', 30, 'Easy', 2, true),
-    ('potato_stew', 'Rustic Potato Stew', '🥣', 'A warm, comforting one-pot meal with no fuss.', 45, 'Easy', 4, true),
-    ('chicken_wrap', 'Chicken Wraps', '🌯', 'Crisp vegetables and seasoned chicken wrapped in warm tortillas.', 25, 'Easy', 2, true),
-    ('mushroom_toast', 'Mushroom Toast', '🍄', 'A warm, savory toast for a quick breakfast or dinner.', 20, 'Very easy', 2, true),
-    ('spinach_eggs', 'Eggs with Spinach', '🥬', 'A simple, nutritious one-pan meal.', 15, 'Very easy', 1, true),
-    ('bean_salad', 'Quick Bean Salad', '🫘', 'A filling pantry salad that requires no cooking.', 12, 'Very easy', 2, true)
+    ('chicken_risotto', 'Chicken Risotto', '🍲', 'A creamy one-pan meal that is perfect for a busy weeknight.', 35, 'Easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('veggie_omelette', 'Vegetable Omelet', '🍳', 'A quick, fluffy omelet for breakfast or a light dinner.', 15, 'Very easy', 1, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('tomato_pasta', 'Pasta with Tomato Sauce', '🍝', 'A simple classic with plenty of garlic flavor.', 25, 'Easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('fried_rice', 'Egg Fried Rice', '🥘', 'A delicious way to use up yesterday''s cooked rice.', 20, 'Easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('potato_frittata', 'Potato Frittata', '🥔', 'A satisfying meal made with a few everyday ingredients.', 35, 'Easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('chicken_pasta', 'Creamy Chicken Pasta', '🍗', 'Tender chicken and pasta in a light yogurt sauce.', 30, 'Easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('stuffed_zucchini', 'Stuffed Zucchini', '🥒', 'Tender zucchini filled with ground beef and rice.', 55, 'Medium', 3, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('tuna_salad', 'Tuna Salad', '🥗', 'A fresh, protein-packed salad ready in ten minutes.', 10, 'Very easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('shakshuka', 'Shakshuka', '🍅', 'Eggs gently cooked in a rich tomato and bell pepper sauce.', 30, 'Easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('potato_stew', 'Rustic Potato Stew', '🥣', 'A warm, comforting one-pot meal with no fuss.', 45, 'Easy', 4, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('chicken_wrap', 'Chicken Wraps', '🌯', 'Crisp vegetables and seasoned chicken wrapped in warm tortillas.', 25, 'Easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('mushroom_toast', 'Mushroom Toast', '🍄', 'A warm, savory toast for a quick breakfast or dinner.', 20, 'Very easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('spinach_eggs', 'Eggs with Spinach', '🥬', 'A simple, nutritious one-pan meal.', 15, 'Very easy', 1, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false),
+    ('bean_salad', 'Quick Bean Salad', '🫘', 'A filling pantry salad that requires no cooking.', 12, 'Very easy', 2, true, 'Dimaso original recipe', 'https://github.com/dimaso-doo/what-to-cook-android', 'All rights reserved', 'Dimaso d.o.o.', false)
 on conflict (slug) do update set
     title = excluded.title,
     emoji = excluded.emoji,
@@ -64,6 +65,11 @@ on conflict (slug) do update set
     difficulty = excluded.difficulty,
     servings = excluded.servings,
     published = excluded.published,
+    source_name = excluded.source_name,
+    source_url = excluded.source_url,
+    license_name = excluded.license_name,
+    attribution = excluded.attribution,
+    modified_from_source = excluded.modified_from_source,
     updated_at = now();
 
 delete from public.recipe_ingredients
@@ -172,6 +178,26 @@ from (values
 ) as v(recipe_slug, ingredient_slug, position, display_text, required_for_match)
 join public.recipes r on r.slug = v.recipe_slug
 join public.ingredients i on i.slug = v.ingredient_slug;
+
+delete from public.recipe_requirements
+where recipe_id in (select id from public.recipes where slug in (
+    'chicken_risotto', 'veggie_omelette', 'tomato_pasta', 'fried_rice',
+    'potato_frittata', 'chicken_pasta', 'stuffed_zucchini', 'tuna_salad',
+    'shakshuka', 'potato_stew', 'chicken_wrap', 'mushroom_toast',
+    'spinach_eggs', 'bean_salad'
+));
+
+insert into public.recipe_requirements (recipe_id, ingredient_id)
+select distinct ri.recipe_id, ri.ingredient_id
+from public.recipe_ingredients ri
+join public.recipes r on r.id = ri.recipe_id
+where ri.required_for_match
+  and r.slug in (
+      'chicken_risotto', 'veggie_omelette', 'tomato_pasta', 'fried_rice',
+      'potato_frittata', 'chicken_pasta', 'stuffed_zucchini', 'tuna_salad',
+      'shakshuka', 'potato_stew', 'chicken_wrap', 'mushroom_toast',
+      'spinach_eggs', 'bean_salad'
+  );
 
 delete from public.recipe_steps
 where recipe_id in (select id from public.recipes where slug in (
