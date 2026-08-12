@@ -25,9 +25,14 @@ final class SupabaseRecipeService {
         void onComplete(List<Recipe> recipes, Exception error);
     }
 
+    interface AiSuggestionsCallback {
+        void onComplete(AiSuggestionResult result, Exception error);
+    }
+
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
     private static final int CONNECT_TIMEOUT_MS = 8_000;
     private static final int READ_TIMEOUT_MS = 12_000;
+    private static final int AI_READ_TIMEOUT_MS = 40_000;
 
     private SupabaseRecipeService() {}
 
@@ -89,8 +94,52 @@ final class SupabaseRecipeService {
         });
     }
 
+    static void loadAiSuggestions(Collection<String> selected, CookingMode mode,
+                                  String installationId, AiSuggestionsCallback callback) {
+        EXECUTOR.execute(() -> {
+            try {
+                JSONObject body = new JSONObject();
+                body.put("ingredient_slugs", new JSONArray(selected));
+                body.put("mode", mode.apiValue);
+                body.put("installation_id", installationId);
+                JSONObject response = new JSONObject(request(
+                        "POST", "/functions/v1/suggest-recipes", body.toString(), AI_READ_TIMEOUT_MS));
+                JSONArray rows = response.getJSONArray("recipes");
+                List<Recipe> recipes = new ArrayList<>();
+                for (int index = 0; index < rows.length(); index++) {
+                    JSONObject row = rows.getJSONObject(index);
+                    recipes.add(new Recipe(
+                            row.getString("recipe_slug"),
+                            row.getString("title"),
+                            row.optString("emoji", "✨"),
+                            row.getString("description"),
+                            row.getInt("total_minutes"),
+                            row.getString("difficulty"),
+                            row.getInt("servings"),
+                            nullable(row, "source_name"),
+                            nullable(row, "source_url"),
+                            nullable(row, "license_name"),
+                            nullable(row, "attribution"),
+                            row.optBoolean("modified_from_source", false),
+                            true,
+                            strings(row.getJSONArray("required_ingredient_slugs")),
+                            strings(row.optJSONArray("missing_ingredients")),
+                            strings(row.getJSONArray("ingredient_lines")),
+                            strings(row.getJSONArray("steps"))));
+                }
+                Integer remaining = response.isNull("remaining_today")
+                        ? null : response.optInt("remaining_today");
+                callback.onComplete(new AiSuggestionResult(
+                        recipes, response.optBoolean("cached", false), remaining), null);
+            } catch (Exception error) {
+                callback.onComplete(null, error);
+            }
+        });
+    }
+
     private static List<String> strings(JSONArray values) throws Exception {
         List<String> result = new ArrayList<>();
+        if (values == null) return result;
         for (int index = 0; index < values.length(); index++) result.add(values.getString(index));
         return result;
     }
@@ -100,11 +149,15 @@ final class SupabaseRecipeService {
     }
 
     private static String request(String method, String path, String body) throws Exception {
+        return request(method, path, body, READ_TIMEOUT_MS);
+    }
+
+    private static String request(String method, String path, String body, int readTimeoutMs) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(BuildConfig.SUPABASE_URL + path)
                 .openConnection();
         connection.setRequestMethod(method);
         connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-        connection.setReadTimeout(READ_TIMEOUT_MS);
+        connection.setReadTimeout(readTimeoutMs);
         connection.setRequestProperty("apikey", BuildConfig.SUPABASE_PUBLISHABLE_KEY);
         connection.setRequestProperty("Accept", "application/json");
         if (body != null) {

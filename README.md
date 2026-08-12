@@ -7,7 +7,9 @@ The app interface and all recipe content are in English.
 ## Features
 
 - ingredient selection and search without entering quantities;
-- only recipes whose required ingredients are all available;
+- AI suggestions in two modes: only what the user has, or broader meal ideas;
+- salt, black pepper, oil, and water are treated as assumed pantry staples;
+- a five-per-device daily AI quota, global cost cap, and 90-day Supabase cache;
 - recipe details with the full ingredient list, quantities, cooking time, and preparation steps;
 - a Supabase recipe catalogue with exact required-ingredient matching;
 - ten popular ingredients on the starting panel and searchable suggestions for the full catalogue;
@@ -20,6 +22,8 @@ The app interface and all recipe content are in English.
 The production-safe schema and starter data are versioned in `supabase/schema.sql` and
 `supabase/seed.sql`. The Android client uses only the public read-only key. Row Level
 Security prevents anonymous clients from adding, changing, or deleting catalogue data.
+OpenAI calls run only inside the `suggest-recipes` Supabase Edge Function. The API key is
+stored as a Supabase secret and is never embedded in the Android app or repository.
 
 ## Recipe import
 

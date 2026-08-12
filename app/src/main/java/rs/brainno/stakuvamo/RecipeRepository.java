@@ -17,6 +17,10 @@ public final class RecipeRepository {
         void onComplete(List<RecipeMatch> matches, boolean loadedFromSupabase);
     }
 
+    public interface AiMatchesCallback {
+        void onComplete(List<RecipeMatch> matches, AiSuggestionResult result, Exception error);
+    }
+
     private static final List<Ingredient> OFFLINE_INGREDIENTS = Arrays.asList(
             new Ingredient("eggs", "Eggs", "🥚", "Protein"),
             new Ingredient("chicken", "Chicken", "🍗", "Protein"),
@@ -228,6 +232,31 @@ public final class RecipeRepository {
                 callback.onComplete(findMatches(selectedSnapshot), false);
             }
         });
+    }
+
+    public static void findAiMatchesAsync(Set<String> selected, CookingMode mode,
+                                          String installationId, AiMatchesCallback callback) {
+        if (selected.isEmpty()) {
+            callback.onComplete(Collections.emptyList(), null, null);
+            return;
+        }
+        Set<String> selectedSnapshot = new java.util.LinkedHashSet<>(selected);
+        SupabaseRecipeService.loadAiSuggestions(selectedSnapshot, mode, installationId,
+                (result, error) -> {
+                    if (error != null || result == null) {
+                        callback.onComplete(Collections.emptyList(), null, error);
+                        return;
+                    }
+                    Map<String, Recipe> updated = new LinkedHashMap<>(recipeMap);
+                    List<RecipeMatch> matches = new ArrayList<>();
+                    for (Recipe recipe : result.recipes) {
+                        updated.put(recipe.id, recipe);
+                        matches.add(new RecipeMatch(recipe, recipe.coreIngredientIds.size(),
+                                recipe.missingIngredientNames));
+                    }
+                    recipeMap = Collections.unmodifiableMap(updated);
+                    callback.onComplete(Collections.unmodifiableList(matches), result, null);
+                });
     }
 
     private static Map<String, Ingredient> ingredientMap(List<Ingredient> ingredients) {

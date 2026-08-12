@@ -80,6 +80,18 @@ public final class RecipeDetailActivity extends Activity {
         descriptionParams.topMargin = Ui.dp(this, 8);
         page.addView(description, descriptionParams);
 
+        if (recipe.aiGenerated) {
+            TextView aiNotice = Ui.text(this,
+                    "✨  AI-generated cooking idea — check doneness and food safety as you cook.",
+                    13, Ui.GREEN, true);
+            aiNotice.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
+            aiNotice.setBackground(Ui.background(Ui.PALE_GREEN, 12, this));
+            LinearLayout.LayoutParams aiNoticeParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            aiNoticeParams.topMargin = Ui.dp(this, 14);
+            page.addView(aiNotice, aiNoticeParams);
+        }
+
         LinearLayout meta = new LinearLayout(this);
         meta.setOrientation(LinearLayout.HORIZONTAL);
         meta.setGravity(Gravity.CENTER);
@@ -104,6 +116,19 @@ public final class RecipeDetailActivity extends Activity {
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             availabilityParams.topMargin = Ui.dp(this, 14);
             page.addView(availability, availabilityParams);
+        }
+
+        if (!recipe.missingIngredientNames.isEmpty()) {
+            TextView missing = Ui.text(this,
+                    "Extra ingredients needed: " + android.text.TextUtils.join(", ",
+                            recipe.missingIngredientNames),
+                    14, Ui.ORANGE, true);
+            missing.setPadding(Ui.dp(this, 15), Ui.dp(this, 13), Ui.dp(this, 15), Ui.dp(this, 13));
+            missing.setBackground(Ui.background(Ui.PALE_ORANGE, 13, this));
+            LinearLayout.LayoutParams missingParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            missingParams.topMargin = Ui.dp(this, 14);
+            page.addView(missing, missingParams);
         }
 
         addSectionTitle(page, "Main ingredients", "Items you already have are marked in green", 29);
@@ -167,7 +192,7 @@ public final class RecipeDetailActivity extends Activity {
             step.addView(instruction, instructionParams);
         }
 
-        if (recipe.sourceName != null && !recipe.sourceName.isEmpty()) {
+        if (recipe.sourceName != null && !recipe.sourceName.isEmpty() && !recipe.aiGenerated) {
             addSectionTitle(page, "Source and license", "Recipe provenance", 20);
             LinearLayout sourceCard = sectionCard();
             sourceCard.setPadding(Ui.dp(this, 16), Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 14));

@@ -15,7 +15,9 @@ public final class Recipe {
     public final String licenseName;
     public final String attribution;
     public final boolean modifiedFromSource;
+    public final boolean aiGenerated;
     public final List<String> coreIngredientIds;
+    public final List<String> missingIngredientNames;
     public final List<String> ingredientLines;
     public final List<String> steps;
 
@@ -23,7 +25,8 @@ public final class Recipe {
                   String difficulty, int servings, List<String> coreIngredientIds,
                   List<String> ingredientLines, List<String> steps) {
         this(id, title, emoji, description, minutes, difficulty, servings,
-                null, null, null, null, false, coreIngredientIds, ingredientLines, steps);
+                null, null, null, null, false, false, coreIngredientIds,
+                java.util.Collections.emptyList(), ingredientLines, steps);
     }
 
     public Recipe(String id, String title, String emoji, String description, int minutes,
@@ -43,7 +46,34 @@ public final class Recipe {
         this.licenseName = licenseName;
         this.attribution = attribution;
         this.modifiedFromSource = modifiedFromSource;
+        this.aiGenerated = false;
         this.coreIngredientIds = coreIngredientIds;
+        this.missingIngredientNames = java.util.Collections.emptyList();
+        this.ingredientLines = ingredientLines;
+        this.steps = steps;
+    }
+
+    public Recipe(String id, String title, String emoji, String description, int minutes,
+                  String difficulty, int servings, String sourceName, String sourceUrl,
+                  String licenseName, String attribution, boolean modifiedFromSource,
+                  boolean aiGenerated, List<String> coreIngredientIds,
+                  List<String> missingIngredientNames, List<String> ingredientLines,
+                  List<String> steps) {
+        this.id = id;
+        this.title = title;
+        this.emoji = emoji;
+        this.description = description;
+        this.minutes = minutes;
+        this.difficulty = difficulty;
+        this.servings = servings;
+        this.sourceName = sourceName;
+        this.sourceUrl = sourceUrl;
+        this.licenseName = licenseName;
+        this.attribution = attribution;
+        this.modifiedFromSource = modifiedFromSource;
+        this.aiGenerated = aiGenerated;
+        this.coreIngredientIds = coreIngredientIds;
+        this.missingIngredientNames = missingIngredientNames;
         this.ingredientLines = ingredientLines;
         this.steps = steps;
     }
