@@ -1,6 +1,6 @@
-# What to Cook?
+# Cook From This
 
-A lightweight native Android app that suggests meals based on ingredients the user already has.
+A lightweight native Android AI cooking assistant that generates practical meals from ingredients the user already has.
 
 The app interface and all recipe content are in English.
 

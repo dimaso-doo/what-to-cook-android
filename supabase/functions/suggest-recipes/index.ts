@@ -182,7 +182,7 @@ function normalizeRecipes(
       source_name: "AI-generated cooking idea",
       source_url: null,
       license_name: null,
-      attribution: "Generated for What to Cook?",
+      attribution: "Generated for Cook From This",
       modified_from_source: false,
       ai_generated: true,
       required_ingredient_slugs: Array.from(usedAvailable),
@@ -268,7 +268,7 @@ Deno.serve(async (request) => {
   const modeRule = mode === "strict"
     ? "STRICT MODE: Use only the available ingredients and the four assumed staples. Never add a missing ingredient."
     : "IDEAS MODE: Use the available ingredients as the foundation. You may add at most 5 ordinary missing ingredients, and must label every one as missing.";
-  const prompt = `You are the cooking engine for What to Cook?. Create 1 to 3 honest, practical recipes in English.
+  const prompt = `You are the cooking engine for Cook From This. Create 1 to 3 honest, practical recipes in English.
 
 ${modeRule}
 

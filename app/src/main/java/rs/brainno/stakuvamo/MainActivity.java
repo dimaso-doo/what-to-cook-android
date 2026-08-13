@@ -2,6 +2,7 @@ package rs.brainno.stakuvamo;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
@@ -15,6 +16,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 public final class MainActivity extends Activity {
+    private static final long MIN_AI_LOADING_MS = 700L;
     private static final String STATE_SELECTED = "selected";
     private static final String STATE_RESULTS = "results";
     private static final String STATE_QUERY = "query";
@@ -43,6 +46,7 @@ public final class MainActivity extends Activity {
     private EditText ingredientSearch;
     private Button strictModeButton;
     private Button ideasModeButton;
+    private long aiLoadingStartedAt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,7 +122,7 @@ public final class MainActivity extends Activity {
         logo.setGravity(Gravity.CENTER);
         logo.setBackground(Ui.background(Ui.PALE_ORANGE, 14, this));
         brand.addView(logo, new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
-        TextView brandName = Ui.text(this, "WHAT TO COOK?", 13, Ui.GREEN, true);
+        TextView brandName = Ui.text(this, "COOK FROM THIS", 13, Ui.GREEN, true);
         brandName.setLetterSpacing(0.12f);
         LinearLayout.LayoutParams brandNameParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -133,7 +137,7 @@ public final class MainActivity extends Activity {
         page.addView(title, titleParams);
 
         TextView subtitle = Ui.text(this,
-                "Type at least 2 letters, then select an ingredient from the list.",
+                "Add what you have and AI will create practical recipes for you. Type at least 2 letters to find an ingredient.",
                 16, Ui.MUTED, false);
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -261,8 +265,26 @@ public final class MainActivity extends Activity {
         });
         FrameLayout.LayoutParams buttonParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 58), Gravity.BOTTOM);
-        buttonParams.setMargins(Ui.dp(this, 20), Ui.dp(this, 12), Ui.dp(this, 20), Ui.dp(this, 20));
+        int horizontalMargin = Ui.dp(this, 20);
+        int defaultBottomMargin = Ui.dp(this, 20);
+        buttonParams.setMargins(horizontalMargin, Ui.dp(this, 12), horizontalMargin,
+                defaultBottomMargin);
         root.addView(findButton, buttonParams);
+
+        // Android 15+ draws apps edge-to-edge. Keep the primary action above the
+        // device's gesture or three-button navigation area on every screen size.
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int navigationInset = insets.getSystemWindowInsetBottom();
+            FrameLayout.LayoutParams currentButtonParams =
+                    (FrameLayout.LayoutParams) findButton.getLayoutParams();
+            currentButtonParams.bottomMargin = Math.max(defaultBottomMargin,
+                    navigationInset + Ui.dp(this, 12));
+            findButton.setLayoutParams(currentButtonParams);
+            page.setPadding(Ui.dp(this, 20), Ui.dp(this, 22), Ui.dp(this, 20),
+                    Ui.dp(this, 110) + currentButtonParams.bottomMargin);
+            return insets;
+        });
+        root.requestApplyInsets();
 
         updateSelectionUi();
         setContentView(root);
@@ -355,13 +377,21 @@ public final class MainActivity extends Activity {
 
     private void loadResults() {
         showingResults = true;
+        aiLoadingStartedAt = android.os.SystemClock.elapsedRealtime();
         renderLoadingResults();
         RecipeRepository.findAiMatchesAsync(selectedIngredients, cookingMode, installationId(),
-                (matches, result, error) -> runOnUiThread(() -> {
+                (matches, result, error) -> runOnUiThread(() -> showAiResponse(matches, result, error)));
+    }
+
+    private void showAiResponse(List<RecipeMatch> matches, AiSuggestionResult result,
+                                Exception error) {
+        long elapsed = android.os.SystemClock.elapsedRealtime() - aiLoadingStartedAt;
+        long remaining = Math.max(0L, MIN_AI_LOADING_MS - elapsed);
+        findViewById(android.R.id.content).postDelayed(() -> {
                     if (!showingResults || isFinishing()) return;
                     if (error == null) renderResults(matches, result);
                     else renderAiError(error);
-                }));
+                }, remaining);
     }
 
     private void renderResults(List<RecipeMatch> matches) {
@@ -456,12 +486,41 @@ public final class MainActivity extends Activity {
                 cookingMode == CookingMode.STRICT
                         ? "Using only what you have, plus salt, pepper, oil, and water."
                         : "Looking for useful ideas and clearly marking anything extra.");
-        TextView sparkle = Ui.text(this, "✨", 58, Ui.INK, false);
-        sparkle.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+
+        LinearLayout loaderCard = new LinearLayout(this);
+        loaderCard.setOrientation(LinearLayout.VERTICAL);
+        loaderCard.setGravity(Gravity.CENTER);
+        loaderCard.setPadding(Ui.dp(this, 20), Ui.dp(this, 28),
+                Ui.dp(this, 20), Ui.dp(this, 26));
+        loaderCard.setBackground(Ui.outlined(Ui.WHITE, Ui.LINE, 18, this));
+        loaderCard.setContentDescription("AI is generating recipe ideas");
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.topMargin = Ui.dp(this, 44);
-        page.addView(sparkle, params);
+        cardParams.topMargin = Ui.dp(this, 34);
+        page.addView(loaderCard, cardParams);
+
+        ProgressBar progress = new ProgressBar(this);
+        progress.setIndeterminate(true);
+        progress.setIndeterminateTintList(ColorStateList.valueOf(Ui.GREEN));
+        loaderCard.addView(progress, new LinearLayout.LayoutParams(
+                Ui.dp(this, 52), Ui.dp(this, 52)));
+
+        TextView progressTitle = Ui.text(this, "Generating with AI", 17, Ui.INK, true);
+        progressTitle.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams progressTitleParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        progressTitleParams.topMargin = Ui.dp(this, 16);
+        loaderCard.addView(progressTitle, progressTitleParams);
+
+        TextView progressHint = Ui.text(this,
+                "This usually takes a few seconds. Please keep the app open.",
+                13, Ui.MUTED, false);
+        progressHint.setGravity(Gravity.CENTER);
+        progressHint.setLineSpacing(Ui.dp(this, 2), 1.08f);
+        LinearLayout.LayoutParams progressHintParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        progressHintParams.topMargin = Ui.dp(this, 7);
+        loaderCard.addView(progressHint, progressHintParams);
     }
 
     private void renderAiError(Exception error) {

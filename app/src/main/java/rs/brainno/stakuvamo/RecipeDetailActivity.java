@@ -175,9 +175,12 @@ public final class RecipeDetailActivity extends Activity {
             LinearLayout step = new LinearLayout(this);
             step.setOrientation(LinearLayout.HORIZONTAL);
             step.setGravity(Gravity.TOP);
+            step.setPadding(Ui.dp(this, 14), Ui.dp(this, 14),
+                    Ui.dp(this, 14), Ui.dp(this, 20));
+            step.setBackground(Ui.outlined(Ui.WHITE, Ui.LINE, 15, this));
             LinearLayout.LayoutParams stepParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            stepParams.bottomMargin = Ui.dp(this, 17);
+            stepParams.bottomMargin = Ui.dp(this, 12);
             page.addView(step, stepParams);
 
             TextView number = Ui.text(this, String.valueOf(i + 1), 15, Ui.WHITE, true);
@@ -185,10 +188,13 @@ public final class RecipeDetailActivity extends Activity {
             number.setBackground(Ui.background(Ui.GREEN, 18, this));
             step.addView(number, new LinearLayout.LayoutParams(Ui.dp(this, 36), Ui.dp(this, 36)));
             TextView instruction = Ui.text(this, recipe.steps.get(i), 15, Ui.INK, false);
+            instruction.setIncludeFontPadding(true);
+            instruction.setLineSpacing(Ui.dp(this, 2), 1.08f);
+            instruction.setPadding(0, 0, 0, Ui.dp(this, 12));
             LinearLayout.LayoutParams instructionParams = new LinearLayout.LayoutParams(
                     0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
             instructionParams.leftMargin = Ui.dp(this, 13);
-            instructionParams.topMargin = Ui.dp(this, 5);
+            instructionParams.topMargin = Ui.dp(this, 3);
             step.addView(instruction, instructionParams);
         }
 
@@ -206,7 +212,7 @@ public final class RecipeDetailActivity extends Activity {
             }
             if (recipe.licenseName != null && !recipe.licenseName.isEmpty()) {
                 String licenseText = recipe.licenseName
-                        + (recipe.modifiedFromSource ? " · Adapted for What to Cook" : "");
+                        + (recipe.modifiedFromSource ? " · Adapted for Cook From This" : "");
                 TextView license = Ui.text(this, licenseText, 13, Ui.MUTED, false);
                 license.setPadding(0, Ui.dp(this, 5), 0, 0);
                 sourceCard.addView(license);

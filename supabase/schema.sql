@@ -1,4 +1,4 @@
--- What to Cook? database schema.
+-- Cook From This database schema.
 -- The Android application has read-only access through the anon role.
 
 create schema if not exists private;

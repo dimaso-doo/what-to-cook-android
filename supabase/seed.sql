@@ -268,7 +268,7 @@ select
     'https://github.com/dimaso-doo/what-to-cook-android',
     'All rights reserved',
     'Dimaso d.o.o.',
-    'Original English starter content prepared for the What to Cook application.',
+    'Original English starter content prepared for the Cook From This application.',
     now()
 from public.recipes r
 where r.slug in (
