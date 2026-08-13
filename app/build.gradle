@@ -7,15 +7,18 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId 'rs.brainno.stakuvamo'
+        applicationId 'com.dimaso.whattocook'
         minSdk 24
         targetSdk 36
-        versionCode 1
-        versionName '1.0'
+        versionCode 4
+        versionName '1.2.0'
+
+        buildConfigField 'String', 'SUPABASE_URL', '"https://uldczhwrandnxuwmgjyn.supabase.co"'
+        buildConfigField 'String', 'SUPABASE_PUBLISHABLE_KEY', '"sb_publishable_Cip9ZjKhmNTORYpaFCLQEw_4bmT9UH5"'
     }
 
     buildFeatures {
-        buildConfig = false
+        buildConfig = true
     }
 
     compileOptions {

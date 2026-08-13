@@ -3,14 +3,25 @@ package rs.brainno.stakuvamo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public final class RecipeRepository {
-    private static final List<Ingredient> INGREDIENTS = Arrays.asList(
+    public interface IngredientsCallback {
+        void onComplete(boolean loadedFromSupabase);
+    }
+
+    public interface MatchesCallback {
+        void onComplete(List<RecipeMatch> matches, boolean loadedFromSupabase);
+    }
+
+    public interface AiMatchesCallback {
+        void onComplete(List<RecipeMatch> matches, AiSuggestionResult result, Exception error);
+    }
+
+    private static final List<Ingredient> OFFLINE_INGREDIENTS = Arrays.asList(
             new Ingredient("eggs", "Eggs", "🥚", "Protein"),
             new Ingredient("chicken", "Chicken", "🍗", "Protein"),
             new Ingredient("ground_meat", "Ground beef", "🥩", "Protein"),
@@ -37,7 +48,7 @@ public final class RecipeRepository {
             new Ingredient("lemon", "Lemon", "🍋", "Other")
     );
 
-    private static final List<Recipe> RECIPES = Arrays.asList(
+    private static final List<Recipe> OFFLINE_RECIPES = Arrays.asList(
             recipe("chicken_risotto", "Chicken Risotto", "🍲",
                     "A creamy one-pan meal that's perfect for a busy weeknight.", 35, "Easy", 2,
                     list("chicken", "rice", "onion", "carrot", "peas"),
@@ -155,51 +166,109 @@ public final class RecipeRepository {
                             "Combine everything and season with lemon juice, oil, salt, and pepper."))
     );
 
-    private static final Map<String, Ingredient> INGREDIENT_MAP = new LinkedHashMap<>();
-    private static final Map<String, Recipe> RECIPE_MAP = new LinkedHashMap<>();
-
-    static {
-        for (Ingredient ingredient : INGREDIENTS) INGREDIENT_MAP.put(ingredient.id, ingredient);
-        for (Recipe recipe : RECIPES) RECIPE_MAP.put(recipe.id, recipe);
-    }
+    private static volatile List<Ingredient> currentIngredients = OFFLINE_INGREDIENTS;
+    private static volatile Map<String, Ingredient> ingredientMap = ingredientMap(OFFLINE_INGREDIENTS);
+    private static volatile Map<String, Recipe> recipeMap = recipeMap(OFFLINE_RECIPES);
 
     private RecipeRepository() {}
 
     public static List<Ingredient> ingredients() {
-        return INGREDIENTS;
+        return currentIngredients;
     }
 
     public static Ingredient ingredient(String id) {
-        return INGREDIENT_MAP.get(id);
+        return ingredientMap.get(id);
     }
 
     public static Recipe recipe(String id) {
-        return RECIPE_MAP.get(id);
+        return recipeMap.get(id);
     }
 
     public static List<RecipeMatch> findMatches(Set<String> selected) {
         List<RecipeMatch> matches = new ArrayList<>();
-        for (Recipe recipe : RECIPES) {
-            int matchedCount = 0;
-            List<String> missing = new ArrayList<>();
-            for (String ingredientId : recipe.coreIngredientIds) {
-                if (selected.contains(ingredientId)) matchedCount++;
-                else missing.add(ingredientId);
+        for (Recipe recipe : OFFLINE_RECIPES) {
+            if (selected.containsAll(recipe.coreIngredientIds)) {
+                matches.add(new RecipeMatch(
+                        recipe, recipe.coreIngredientIds.size(), Collections.emptyList()));
             }
-            if (matchedCount > 0) matches.add(new RecipeMatch(recipe, matchedCount, missing));
         }
-        Collections.sort(matches, new Comparator<RecipeMatch>() {
-            @Override
-            public int compare(RecipeMatch first, RecipeMatch second) {
-                if (first.isReady() != second.isReady()) return first.isReady() ? -1 : 1;
-                int byMissing = Integer.compare(first.missingIngredientIds.size(), second.missingIngredientIds.size());
-                if (byMissing != 0) return byMissing;
-                int byMatched = Integer.compare(second.matchedCount, first.matchedCount);
-                if (byMatched != 0) return byMatched;
-                return Integer.compare(first.recipe.minutes, second.recipe.minutes);
-            }
+        Collections.sort(matches, (first, second) -> {
+            int byIngredients = Integer.compare(second.matchedCount, first.matchedCount);
+            if (byIngredients != 0) return byIngredients;
+            return Integer.compare(first.recipe.minutes, second.recipe.minutes);
         });
         return matches;
+    }
+
+    public static void refreshIngredients(IngredientsCallback callback) {
+        SupabaseRecipeService.loadIngredients((ingredients, error) -> {
+            boolean loaded = error == null && ingredients != null && !ingredients.isEmpty();
+            if (loaded) {
+                currentIngredients = Collections.unmodifiableList(new ArrayList<>(ingredients));
+                ingredientMap = ingredientMap(currentIngredients);
+            }
+            callback.onComplete(loaded);
+        });
+    }
+
+    public static void findMatchesAsync(Set<String> selected, MatchesCallback callback) {
+        if (selected.isEmpty()) {
+            callback.onComplete(Collections.emptyList(), false);
+            return;
+        }
+        Set<String> selectedSnapshot = new java.util.LinkedHashSet<>(selected);
+        SupabaseRecipeService.loadMatches(selectedSnapshot, (recipes, error) -> {
+            if (error == null && recipes != null) {
+                Map<String, Recipe> updated = new LinkedHashMap<>(recipeMap);
+                List<RecipeMatch> matches = new ArrayList<>();
+                for (Recipe recipe : recipes) {
+                    updated.put(recipe.id, recipe);
+                    matches.add(new RecipeMatch(
+                            recipe, recipe.coreIngredientIds.size(), Collections.emptyList()));
+                }
+                recipeMap = Collections.unmodifiableMap(updated);
+                callback.onComplete(Collections.unmodifiableList(matches), true);
+            } else {
+                callback.onComplete(findMatches(selectedSnapshot), false);
+            }
+        });
+    }
+
+    public static void findAiMatchesAsync(Set<String> selected, CookingMode mode,
+                                          String installationId, AiMatchesCallback callback) {
+        if (selected.isEmpty()) {
+            callback.onComplete(Collections.emptyList(), null, null);
+            return;
+        }
+        Set<String> selectedSnapshot = new java.util.LinkedHashSet<>(selected);
+        SupabaseRecipeService.loadAiSuggestions(selectedSnapshot, mode, installationId,
+                (result, error) -> {
+                    if (error != null || result == null) {
+                        callback.onComplete(Collections.emptyList(), null, error);
+                        return;
+                    }
+                    Map<String, Recipe> updated = new LinkedHashMap<>(recipeMap);
+                    List<RecipeMatch> matches = new ArrayList<>();
+                    for (Recipe recipe : result.recipes) {
+                        updated.put(recipe.id, recipe);
+                        matches.add(new RecipeMatch(recipe, recipe.coreIngredientIds.size(),
+                                recipe.missingIngredientNames));
+                    }
+                    recipeMap = Collections.unmodifiableMap(updated);
+                    callback.onComplete(Collections.unmodifiableList(matches), result, null);
+                });
+    }
+
+    private static Map<String, Ingredient> ingredientMap(List<Ingredient> ingredients) {
+        Map<String, Ingredient> result = new LinkedHashMap<>();
+        for (Ingredient ingredient : ingredients) result.put(ingredient.id, ingredient);
+        return Collections.unmodifiableMap(result);
+    }
+
+    private static Map<String, Recipe> recipeMap(List<Recipe> recipes) {
+        Map<String, Recipe> result = new LinkedHashMap<>();
+        for (Recipe recipe : recipes) result.put(recipe.id, recipe);
+        return Collections.unmodifiableMap(result);
     }
 
     private static List<String> list(String... values) {

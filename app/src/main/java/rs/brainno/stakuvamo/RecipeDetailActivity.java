@@ -1,7 +1,8 @@
 package rs.brainno.stakuvamo;
 
 import android.app.Activity;
-import android.graphics.Color;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -79,6 +80,18 @@ public final class RecipeDetailActivity extends Activity {
         descriptionParams.topMargin = Ui.dp(this, 8);
         page.addView(description, descriptionParams);
 
+        if (recipe.aiGenerated) {
+            TextView aiNotice = Ui.text(this,
+                    "✨  AI-generated cooking idea — check doneness and food safety as you cook.",
+                    13, Ui.GREEN, true);
+            aiNotice.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
+            aiNotice.setBackground(Ui.background(Ui.PALE_GREEN, 12, this));
+            LinearLayout.LayoutParams aiNoticeParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            aiNoticeParams.topMargin = Ui.dp(this, 14);
+            page.addView(aiNotice, aiNoticeParams);
+        }
+
         LinearLayout meta = new LinearLayout(this);
         meta.setOrientation(LinearLayout.HORIZONTAL);
         meta.setGravity(Gravity.CENTER);
@@ -94,23 +107,29 @@ public final class RecipeDetailActivity extends Activity {
         meta.addView(metaDivider());
         meta.addView(metaCell("♨", recipe.servings + (recipe.servings == 1 ? " serving" : " servings"), "Yield"));
 
-        int missingCount = 0;
-        for (String id : recipe.coreIngredientIds) if (!selected.contains(id)) missingCount++;
-        TextView availability;
-        if (missingCount == 0) {
-            availability = Ui.text(this, "✓  You have all the main ingredients", 14, Ui.GREEN, true);
+        if (selected.containsAll(recipe.coreIngredientIds)) {
+            TextView availability = Ui.text(this,
+                    "✓  You have all the main ingredients", 14, Ui.GREEN, true);
             availability.setBackground(Ui.background(Ui.PALE_GREEN, 13, this));
-        } else {
-            availability = Ui.text(this,
-                    missingCount == 1 ? "You're missing 1 main ingredient" : "You're missing " + missingCount + " main ingredients",
-                    14, Color.rgb(150, 82, 25), true);
-            availability.setBackground(Ui.background(Ui.PALE_ORANGE, 13, this));
+            availability.setPadding(Ui.dp(this, 15), Ui.dp(this, 13), Ui.dp(this, 15), Ui.dp(this, 13));
+            LinearLayout.LayoutParams availabilityParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            availabilityParams.topMargin = Ui.dp(this, 14);
+            page.addView(availability, availabilityParams);
         }
-        availability.setPadding(Ui.dp(this, 15), Ui.dp(this, 13), Ui.dp(this, 15), Ui.dp(this, 13));
-        LinearLayout.LayoutParams availabilityParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        availabilityParams.topMargin = Ui.dp(this, 14);
-        page.addView(availability, availabilityParams);
+
+        if (!recipe.missingIngredientNames.isEmpty()) {
+            TextView missing = Ui.text(this,
+                    "Extra ingredients needed: " + android.text.TextUtils.join(", ",
+                            recipe.missingIngredientNames),
+                    14, Ui.ORANGE, true);
+            missing.setPadding(Ui.dp(this, 15), Ui.dp(this, 13), Ui.dp(this, 15), Ui.dp(this, 13));
+            missing.setBackground(Ui.background(Ui.PALE_ORANGE, 13, this));
+            LinearLayout.LayoutParams missingParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            missingParams.topMargin = Ui.dp(this, 14);
+            page.addView(missing, missingParams);
+        }
 
         addSectionTitle(page, "Main ingredients", "Items you already have are marked in green", 29);
         FlowLayout coreFlow = new FlowLayout(this);
@@ -156,9 +175,12 @@ public final class RecipeDetailActivity extends Activity {
             LinearLayout step = new LinearLayout(this);
             step.setOrientation(LinearLayout.HORIZONTAL);
             step.setGravity(Gravity.TOP);
+            step.setPadding(Ui.dp(this, 14), Ui.dp(this, 14),
+                    Ui.dp(this, 14), Ui.dp(this, 20));
+            step.setBackground(Ui.outlined(Ui.WHITE, Ui.LINE, 15, this));
             LinearLayout.LayoutParams stepParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            stepParams.bottomMargin = Ui.dp(this, 17);
+            stepParams.bottomMargin = Ui.dp(this, 12);
             page.addView(step, stepParams);
 
             TextView number = Ui.text(this, String.valueOf(i + 1), 15, Ui.WHITE, true);
@@ -166,11 +188,41 @@ public final class RecipeDetailActivity extends Activity {
             number.setBackground(Ui.background(Ui.GREEN, 18, this));
             step.addView(number, new LinearLayout.LayoutParams(Ui.dp(this, 36), Ui.dp(this, 36)));
             TextView instruction = Ui.text(this, recipe.steps.get(i), 15, Ui.INK, false);
+            instruction.setIncludeFontPadding(true);
+            instruction.setLineSpacing(Ui.dp(this, 2), 1.08f);
+            instruction.setPadding(0, 0, 0, Ui.dp(this, 12));
             LinearLayout.LayoutParams instructionParams = new LinearLayout.LayoutParams(
                     0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
             instructionParams.leftMargin = Ui.dp(this, 13);
-            instructionParams.topMargin = Ui.dp(this, 5);
+            instructionParams.topMargin = Ui.dp(this, 3);
             step.addView(instruction, instructionParams);
+        }
+
+        if (recipe.sourceName != null && !recipe.sourceName.isEmpty() && !recipe.aiGenerated) {
+            addSectionTitle(page, "Source and license", "Recipe provenance", 20);
+            LinearLayout sourceCard = sectionCard();
+            sourceCard.setPadding(Ui.dp(this, 16), Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 14));
+            TextView source = Ui.text(this, recipe.sourceName, 15, Ui.GREEN, true);
+            sourceCard.addView(source);
+            if (recipe.attribution != null && !recipe.attribution.isEmpty()) {
+                TextView attribution = Ui.text(this, "Attribution: " + recipe.attribution,
+                        13, Ui.MUTED, false);
+                attribution.setPadding(0, Ui.dp(this, 7), 0, 0);
+                sourceCard.addView(attribution);
+            }
+            if (recipe.licenseName != null && !recipe.licenseName.isEmpty()) {
+                String licenseText = recipe.licenseName
+                        + (recipe.modifiedFromSource ? " · Adapted for Cook From This" : "");
+                TextView license = Ui.text(this, licenseText, 13, Ui.MUTED, false);
+                license.setPadding(0, Ui.dp(this, 5), 0, 0);
+                sourceCard.addView(license);
+            }
+            if (recipe.sourceUrl != null && !recipe.sourceUrl.isEmpty()) {
+                source.setText(recipe.sourceName + "  ↗");
+                source.setOnClickListener(v -> startActivity(
+                        new Intent(Intent.ACTION_VIEW, Uri.parse(recipe.sourceUrl))));
+            }
+            page.addView(sourceCard);
         }
 
         TextView enjoy = Ui.text(this, "Enjoy!  🍽", 19, Ui.GREEN, true);

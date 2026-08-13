@@ -1,0 +1,19 @@
+Turn the ingredients you already have into practical meal ideas with AI.
+
+Cook From This helps when you are hungry, short on groceries, or simply unsure what to make. Add the ingredients available in your kitchen and let AI generate clear recipes tailored to them.
+
+Choose how AI should help:
+
+• Only what I have — recipes use your selected ingredients plus basic pantry staples: salt, pepper, oil, and water.
+• Give me ideas — AI may suggest a small number of additional ingredients and labels them clearly.
+
+Built for quick decisions:
+
+• Fast ingredient search and selection
+• AI-generated meal ideas in seconds
+• Honest ingredient matching
+• Clear quantities and step-by-step directions
+• Cooking time, difficulty, and serving information
+• No user account required
+
+AI suggestions can occasionally make mistakes. Always check food safety, allergens, and doneness while cooking.
