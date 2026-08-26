@@ -1,5 +1,21 @@
 # What to Cook?
 
+## Google Play
+
+https://play.google.com/store/apps/details?id=com.dimaso.whattocook
+
+## Product
+
+Cook From This / What to Cook? is an Android consumer application that helps users discover meals from ingredients they already have.
+
+## My role
+
+I defined the product flow and v1 scope, directed AI-assisted implementation, reviewed the core ingredient-to-meal journey, performed QA and managed the Google Play release.
+
+## Stack
+
+Native Android, offline content and automated unit checks.
+
 A lightweight native Android app that suggests meals based on ingredients the user already has.
 
 The app interface and all recipe content are in English.
